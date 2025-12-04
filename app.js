@@ -20,7 +20,7 @@ app.use(express.json());
 
 app.use('/api', reminderRoutes);
 
-cron.schedule('54 4 * * *', () => {
+cron.schedule('45 5 * * *', () => {
   console.log("⏰ DRIIIIING ! Rappel envoyé à 3h38");
   sendDailyPrayers();
 });
