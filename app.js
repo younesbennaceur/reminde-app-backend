@@ -19,6 +19,10 @@ app.use(express.json());
 
 app.use('/api', reminderRoutes);
 
+app.get('/', (req, res) => {
+  res.send('Le serveur est en ligne ! 🚀');
+});
+
 
 cron.schedule('* * * * *', () => {
   console.log("⏰ 22h00 : Envoi des rappels d'Azkars du soir...");
