@@ -8,7 +8,7 @@ import cron from 'node-cron';
 import connectDB from './lib/db.js'; 
 import reminderRoutes from './routes/reminderRoute.js';
 import { sendDailyPrayers } from './controllers/pushController.js';
-import { sendFastingReminder } from './controllers/fastingController.js';
+import { sendFastingReminder} from './controllers/pushController.js';
 
 const app = express();
 
