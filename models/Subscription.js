@@ -7,10 +7,10 @@ const SubscriptionSchema = new mongoose.Schema({
     p256dh: String,
     auth: String
   },
-  // 👇 AJOUTE CECI
   preferences: {
-    daily: { type: Boolean, default: true },   // Rappel de 22h
-    fasting: { type: Boolean, default: false } // Rappel Jeûne (Lun/Jeu)
+    
+    daily: { type: Boolean, default: false },   
+    fasting: { type: Boolean, default: false } 
   }
 });
 

@@ -1,33 +1,39 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
 import webpush from "web-push";
 import Subscription from '../models/Subscription.js';
 
+// --- CONFIGURATION ---
+// Vérification stricte des variables d'environnement
 if (!process.env.PRIVATE_VAPID_KEY || !process.env.PUBLIC_VAPID_KEY || !process.env.MAILTO) {
-    throw new Error("ERREUR FATALE: Les clés VAPID ou l'email manquent dans le fichier .env");
+    console.error("❌ ERREUR: Variables VAPID manquantes dans .env");
 }
 
-webpush.setVapidDetails(
-  process.env.MAILTO,
-  process.env.PUBLIC_VAPID_KEY,
-  process.env.PRIVATE_VAPID_KEY
-);
+try {
+    webpush.setVapidDetails(
+      process.env.MAILTO,
+      process.env.PUBLIC_VAPID_KEY,
+      process.env.PRIVATE_VAPID_KEY
+    );
+} catch (err) {
+    console.error("❌ Erreur config VAPID:", err);
+}
 
+// --- 1. INSCRIPTION (Mise à jour des préférences) ---
 export const subscribeUser = async (req, res) => {
-  
   const { subscription, type } = req.body; 
 
+  // Validation basique
+  if (!subscription || !subscription.endpoint || !type) {
+      return res.status(400).json({ error: 'Données manquantes' });
+  }
+
   try {
-    
     const updateFields = {
       endpoint: subscription.endpoint,
       keys: subscription.keys,
-      
+      // On active spécifiquement la préférence demandée
       [`preferences.${type}`]: true 
     };
 
-    
     await Subscription.findOneAndUpdate(
       { endpoint: subscription.endpoint },
       { $set: updateFields }, 
@@ -43,15 +49,16 @@ export const subscribeUser = async (req, res) => {
   }
 };
 
+// --- 2. ENVOI QUOTIDIEN (22h) ---
 export const sendDailyPrayers = async () => {
-
-  console.log("🚀 Envoi des rappels quotidiens...");
+  console.log("🚀 Envoi des rappels quotidiens (22h)...");
 
   try{
-    const subscriptions = await Subscription.find({}).lean();
+    // 👇 CRUCIAL : On filtre uniquement ceux qui veulent le Daily
+    const subscriptions = await Subscription.find({ 'preferences.daily': true }).lean();
 
     if (subscriptions.length === 0) {
-      console.log("Aucun abonné trouvé pour l'envoi des rappels.");
+      console.log("Aucun abonné 'Daily' trouvé.");
       return;
     }
     
@@ -61,50 +68,28 @@ export const sendDailyPrayers = async () => {
       icon: '/Logo.png' 
     });
 
-    const BATCH_SIZE = 100; 
-    let successCount = 0;
-    let failureCount = 0;
-
-    for (let i = 0; i < subscriptions.length; i += BATCH_SIZE) {
-      const batch = subscriptions.slice(i, i + BATCH_SIZE);
-      
-      const promises = batch.map((sub) => {
-        return webpush.sendNotification(sub, payload)
-          .then(() => { successCount++; })
-          .catch(err => {
-            if (err.statusCode === 410 || err.statusCode === 404) {
-              console.log(`Suppression abonné invalide: ${sub._id}`);
-              return Subscription.deleteOne({ _id: sub._id });
-            }
-            console.error(`Erreur envoi (Status ${err.statusCode})`);
-            failureCount++;
-          });
-      });
-
-      await Promise.all(promises);
-      console.log(`📦 Paquet ${Math.floor(i / BATCH_SIZE) + 1} envoyé.`);
-    }
-
-    console.log(`✅ Terminé ! Succès: ${successCount}, Échecs: ${failureCount}`);
+    await sendNotificationsBatch(subscriptions, payload);
 
   } catch (error) {
     console.error("Erreur lors de l'envoi des rappels :", error);
   }
 }
+
+// --- 3. ENVOI JEÛNE (Dim/Mer) ---
 export const sendFastingReminder = async () => {
-  console.log("🌙 Envoi du rappel de jeûne (Lundi/Jeudi)...");
+  console.log("🌙 Envoi du rappel de jeûne...");
 
   try {
-    const subscriptions = await Subscription.find({}).lean();
+    // 👇 CRUCIAL : On filtre uniquement ceux qui veulent le Fasting
+    const subscriptions = await Subscription.find({ 'preferences.fasting': true }).lean();
 
     if (subscriptions.length === 0) {
-      console.log("Aucun abonné pour le rappel de jeûne.");
+      console.log("Aucun abonné 'Fasting' trouvé.");
       return;
     }
 
-    // Déterminer quel jour on annonce (Si on est Dimanche(0) -> Lundi, Sinon -> Jeudi)
     const today = new Date().getDay(); 
-    const dayName = today === 0 ? "الاثنين" : "الخميس";
+    const dayName = today === 0 ? "الاثنين" : "الخميس"; // 0 = Dimanche (pour Lundi)
 
     const payload = JSON.stringify({
       title: "🌙 تذكير صيام النافلة",
@@ -112,6 +97,15 @@ export const sendFastingReminder = async () => {
       icon: '/Logo.png'
     });
 
+    await sendNotificationsBatch(subscriptions, payload);
+
+  } catch (error) {
+    console.error("Erreur rappel jeûne :", error);
+  }
+};
+
+// --- FONCTION UTILITAIRE POUR L'ENVOI EN MASSE ---
+const sendNotificationsBatch = async (subscriptions, payload) => {
     const BATCH_SIZE = 100;
     let successCount = 0;
     let failureCount = 0;
@@ -123,6 +117,7 @@ export const sendFastingReminder = async () => {
         return webpush.sendNotification(sub, payload)
           .then(() => { successCount++; })
           .catch(err => {
+            // 410 = Gone (Utilisateur désabonné), 404 = Not Found
             if (err.statusCode === 410 || err.statusCode === 404) {
               return Subscription.deleteOne({ _id: sub._id });
             }
@@ -132,10 +127,5 @@ export const sendFastingReminder = async () => {
 
       await Promise.all(promises);
     }
-
-    console.log(`✅ Rappel Jeûne envoyé ! Succès: ${successCount}, Échecs: ${failureCount}`);
-
-  } catch (error) {
-    console.error("Erreur rappel jeûne :", error);
-  }
+    console.log(`✅ Envoi terminé ! Succès: ${successCount}, Échecs/Nettoyés: ${failureCount}`);
 };
