@@ -4,6 +4,6 @@ import { subscribeUser, sendDailyPrayers } from "../controllers/pushController.j
 const router = express.Router();
 
 router.post("/subscribe", subscribeUser);
-router.get("/test-notifications", sendDailyPrayers);  // ← Route de test
+  
 
 export default router;
