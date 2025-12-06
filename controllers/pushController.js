@@ -129,3 +129,28 @@ const sendNotificationsBatch = async (subscriptions, payload) => {
     }
     console.log(`✅ Envoi terminé ! Succès: ${successCount}, Échecs/Nettoyés: ${failureCount}`);
 };
+// --- 4. ENVOI JOURS BLANCS (13 - 14 - 15 Hijri) ---
+export const sendWhiteDaysReminder = async () => {
+  console.log("🌕 Envoi du rappel des jours blancs...");
+
+  try {
+    // On filtre seulement ceux qui ont activé 'whiteDays'
+    const subscriptions = await Subscription.find({ 'preferences.whiteDays': true }).lean();
+
+    if (subscriptions.length === 0) {
+      console.log("Aucun abonné 'WhiteDays' trouvé.");
+      return;
+    }
+
+    const payload = JSON.stringify({
+      title: "🌕 تذكير أيام البيض",
+      body: "غدًا تبدأ أيّامُ البِيض، وهي فرصةٌ عظيمة لاغتنام سُنّة صيام ثلاثة أيام من كل شهر، كأنك صمتَ الدهر كله! 🤲",
+      icon: "/Logo.png"
+    });
+
+    await sendNotificationsBatch(subscriptions, payload);
+
+  } catch (error) {
+    console.error("Erreur rappel jours blancs :", error);
+  }
+};

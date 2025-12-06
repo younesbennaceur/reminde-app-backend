@@ -40,6 +40,42 @@ cron.schedule('* * * * *', () => {
   scheduled: true,
   timezone: "Europe/Paris" // 
 });
+import axios from "axios";
+import cron from "node-cron";
+import { sendFastingReminder } from "./controllers/pushController.js";
+
+
+// Cron : vérifier TOUS LES JOURS à 8h si c’est un Jour Blanc
+cron.schedule('* * * * *', async () => {
+  try {
+    const today = new Date();
+    const day = today.getDate();
+    const month = today.getMonth() + 1;
+    const year = today.getFullYear();
+
+    // Format DD-MM-YYYY pour l’API
+    const formatted = `${day}-${month}-${year}`;
+
+    const response = await axios.get(`https://api.aladhan.com/v1/gToH?date=${formatted}`);
+    const hijriDay = parseInt(response.data.data.hijri.day);
+
+    console.log("📅 Jour Hijri :", hijriDay);
+
+    // SI c'est 13 – 14 – 15 → envoyer rappel
+    if ([15].includes(hijriDay)) {
+      console.log("🌙 Aujourd’hui est un jour blanc ! Envoi rappel…");
+      sendWhiteDaysReminder();
+    }    
+
+  } catch (err) {
+    console.error("Erreur dans le cron Ayam Al-Bid :", err);
+  }
+
+}, {
+  scheduled: true,
+  timezone: "Europe/Paris"
+});
+
 
 const PORT = process.env.PORT || 5000;
 
