@@ -36,7 +36,7 @@ cron.schedule('30 21 * * *', () => {
 
 // --- CRON 2 : Rappel Jeûne (NOUVEAU) ---
 // 0 19 * * 0,3  => À la minute 0, heure 19, tous les mois, uniquement le Dimanche(0) et Mercredi(3)
-cron.schedule('* 19 * * *', () => {
+cron.schedule('0 19 * * 0,3', () => {
   console.log("🌙 19h00 (Dim/Mer) : Rappel de jeûne Sunnah");
   sendFastingReminder();
 }, {
