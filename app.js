@@ -10,6 +10,7 @@ import reminderRoutes from './routes/reminderRoute.js';
 import { sendDailyPrayers } from './controllers/pushController.js';
 import { sendFastingReminder} from './controllers/pushController.js';
 import { sendWhiteDaysReminder } from './controllers/pushController.js';
+import axios from 'axios';
 
 const app = express();
 
