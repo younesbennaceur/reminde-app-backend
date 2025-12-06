@@ -9,9 +9,9 @@ const SubscriptionSchema = new mongoose.Schema({
   },
   preferences: {
     
-    daily: { type: Boolean, default: false },   
-    fasting: { type: Boolean, default: false },
-    whiteDays: { type: Boolean, default: false }
+  daily: { type: Boolean, default: false },   
+  fasting: { type: Boolean, default: false },
+  whiteDays: { type: Boolean, default: false }
   }
 });
 

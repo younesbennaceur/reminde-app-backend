@@ -24,8 +24,8 @@ app.use('/api', reminderRoutes);
 app.get('/', (req, res) => {
   res.send('Le serveur est en ligne ! 🚀');
 });
-cron.schedule('* * * * *', () => {
-  console.log("⏰ 11h30 : Envoi des rappels d'Azkars du midi...");
+cron.schedule('30 21 * * *', () => {
+  console.log("⏰ 09h30 : Envoi des rappels d'Azkars du soir");
   sendDailyPrayers();
 }, {
   scheduled: true,
@@ -33,9 +33,10 @@ cron.schedule('* * * * *', () => {
 });
 
 
+
 // --- CRON 2 : Rappel Jeûne (NOUVEAU) ---
 // 0 19 * * 0,3  => À la minute 0, heure 19, tous les mois, uniquement le Dimanche(0) et Mercredi(3)
-cron.schedule('* * * * *', () => {
+cron.schedule('* 19 * * *', () => {
   console.log("🌙 19h00 (Dim/Mer) : Rappel de jeûne Sunnah");
   sendFastingReminder();
 }, {
@@ -46,7 +47,7 @@ cron.schedule('* * * * *', () => {
 
 
 // Cron : vérifier TOUS LES JOURS à 8h si c’est un Jour Blanc
-cron.schedule('* * * * *', async () => {
+cron.schedule('* 19 * * *', async () => {
   try {
     const today = new Date();
     const day = today.getDate();
@@ -62,7 +63,7 @@ cron.schedule('* * * * *', async () => {
     console.log("📅 Jour Hijri :", hijriDay);
 
     // SI c'est 13 – 14 – 15 → envoyer rappel
-    if ([15].includes(hijriDay)) {
+    if ([12].includes(hijriDay)) {
       console.log("🌙 Aujourd’hui est un jour blanc ! Envoi rappel…");
       sendWhiteDaysReminder();
     }    
