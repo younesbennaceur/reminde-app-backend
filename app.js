@@ -9,6 +9,7 @@ import connectDB from './lib/db.js';
 import reminderRoutes from './routes/reminderRoute.js';
 import { sendDailyPrayers } from './controllers/pushController.js';
 import { sendFastingReminder} from './controllers/pushController.js';
+import { sendWhiteDaysReminder } from './controllers/pushController.js';
 
 const app = express();
 
@@ -40,9 +41,7 @@ cron.schedule('* * * * *', () => {
   scheduled: true,
   timezone: "Europe/Paris" // 
 });
-import axios from "axios";
-import cron from "node-cron";
-import { sendFastingReminder } from "./controllers/pushController.js";
+
 
 
 // Cron : vérifier TOUS LES JOURS à 8h si c’est un Jour Blanc
