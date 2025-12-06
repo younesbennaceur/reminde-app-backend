@@ -22,7 +22,7 @@ app.use('/api', reminderRoutes);
 app.get('/', (req, res) => {
   res.send('Le serveur est en ligne ! 🚀');
 });
-cron.schedule('30 09 * * *', () => {
+cron.schedule('* * * * *', () => {
   console.log("⏰ 11h30 : Envoi des rappels d'Azkars du midi...");
   sendDailyPrayers();
 }, {
@@ -31,10 +31,9 @@ cron.schedule('30 09 * * *', () => {
 });
 
 
-
 // --- CRON 2 : Rappel Jeûne (NOUVEAU) ---
 // 0 19 * * 0,3  => À la minute 0, heure 19, tous les mois, uniquement le Dimanche(0) et Mercredi(3)
-cron.schedule('30 09 * * *', () => {
+cron.schedule('* * * * *', () => {
   console.log("🌙 19h00 (Dim/Mer) : Rappel de jeûne Sunnah");
   sendFastingReminder();
 }, {
